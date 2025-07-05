@@ -22,6 +22,7 @@ import {
   IconSchool,
   IconChalkboard,
   IconMessageCircle,
+  IconCalendar,
   IconChartBar,
   IconCurrencyDollar,
   IconSettings,
@@ -33,26 +34,42 @@ import {
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useUserData } from '../../hooks/useUserData';
+import { usePermissions } from '../auth/ProtectedRoute';
 import { notifications } from '@mantine/notifications';
 
 const DashboardLayout = () => {
   const [opened, setOpened] = useState(false);
   const { user, signOut } = useAuth();
+  const { userData, loading: userDataLoading } = useUserData();
+  const { 
+    canManageCourses, 
+    canManageUsers, 
+    canViewReports, 
+    canManageFinances, 
+    canManageSchool,
+    isProfessor,
+    isAluno
+  } = usePermissions();
   const { colorScheme, toggleColorScheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const menuItems = [
-    { icon: IconDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: IconUsers, label: 'Turmas', path: '/dashboard/turmas' },
-    { icon: IconBook, label: 'Cursos', path: '/dashboard/cursos' },
-    { icon: IconSchool, label: 'Alunos', path: '/dashboard/alunos' },
-    { icon: IconChalkboard, label: 'Professores', path: '/dashboard/professores' },
-    { icon: IconMessageCircle, label: 'Comunicação', path: '/dashboard/comunicacao' },
-    { icon: IconChartBar, label: 'Relatórios', path: '/dashboard/relatorios' },
-    { icon: IconCurrencyDollar, label: 'Financeiro', path: '/dashboard/financeiro' },
-    { icon: IconSettings, label: 'Configuração', path: '/dashboard/configuracao' }
+  // Filtrar itens do menu baseado nas permissões
+  const allMenuItems = [
+    { icon: IconDashboard, label: 'Dashboard', path: '/dashboard', show: true },
+    { icon: IconUsers, label: 'Turmas', path: '/dashboard/turmas', show: canManageCourses || isProfessor() },
+    { icon: IconBook, label: 'Cursos', path: '/dashboard/cursos', show: canManageCourses },
+    { icon: IconSchool, label: 'Alunos', path: '/dashboard/alunos', show: canManageUsers || isProfessor() },
+    { icon: IconChalkboard, label: 'Professores', path: '/dashboard/professores', show: canManageUsers },
+    { icon: IconMessageCircle, label: 'Comunicação', path: '/dashboard/comunicacao', show: true },
+    { icon: IconCalendar, label: 'Calendário', path: '/dashboard/calendario', show: true },
+    { icon: IconChartBar, label: 'Relatórios', path: '/dashboard/relatorios', show: canViewReports },
+    { icon: IconCurrencyDollar, label: 'Financeiro', path: '/dashboard/financeiro', show: canManageFinances },
+    { icon: IconSettings, label: 'Configuração', path: '/dashboard/configuracao', show: canManageSchool }
   ];
+
+  const menuItems = allMenuItems.filter(item => item.show);
 
   const handleLogout = async () => {
     try {
@@ -114,10 +131,13 @@ const DashboardLayout = () => {
                     <Avatar size={32} radius="xl" />
                     <Box style={{ flex: 1 }}>
                       <Text size="sm" fw={500}>
-                        {user?.user_metadata?.name || user?.email}
+                        {userData?.nome_completo || user?.email}
                       </Text>
                       <Text c="dimmed" size="xs">
-                        Administrador
+                        {userData?.funcao === 'admin' ? 'Administrador' :
+                         userData?.funcao === 'secretario' ? 'Secretário' :
+                         userData?.funcao === 'professor' ? 'Professor' :
+                         userData?.funcao === 'aluno' ? 'Aluno' : 'Usuário'}
                       </Text>
                     </Box>
                   </Group>

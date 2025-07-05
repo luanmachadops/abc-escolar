@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { authService } from '../lib/supabase';
+import { authService, supabase, UserRole } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string, userData: { name: string; role: string }) => Promise<any>;
+  signUp: (email: string, password: string, userData: { name: string; role: UserRole }) => Promise<any>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { data, error };
   };
 
-  const signUp = async (email: string, password: string, userData: { name: string; role: string }) => {
+  const signUp = async (email: string, password: string, userData: { name: string; role: UserRole }) => {
     const { data, error } = await authService.signUp(email, password, userData);
     if (data.user) {
       setUser(data.user);
@@ -61,8 +62,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

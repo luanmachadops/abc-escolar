@@ -116,7 +116,7 @@ const RegisterSchoolPage = () => {
       logger.info('Iniciando cadastro de escola', 'RegisterSchoolPage', { nome: formData.nomeInstituicao });
 
       logger.debug('Dados validados, inserindo no banco', 'RegisterSchoolPage', {
-        cnpj_cpf: formData.cnpjCpf.replace(/\D/g, ''),
+        cnpj: formData.cnpjCpf.replace(/\D/g, ''),
         endereco: {
           logradouro: formData.logradouro,
           numero: formData.numero,

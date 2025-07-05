@@ -6,13 +6,46 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Tipos para autenticação
+// Tipos para autenticação e dados do usuário
 export interface User {
   id: string;
   email: string;
   role: 'admin' | 'secretary' | 'teacher' | 'student';
   name: string;
   created_at: string;
+}
+
+// Tipos para as tabelas do banco de dados
+export type UserRole = 'admin' | 'secretario' | 'professor' | 'aluno';
+
+export interface DatabaseUser {
+  id: string;
+  auth_user_id: string;
+  escola_id: string;
+  nome_completo: string;
+  email: string;
+  telefone?: string;
+  funcao: UserRole;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Escola {
+  id: string;
+  nome_instituicao: string;
+  cnpj_cpf: string;
+  logradouro: string;
+  numero: string;
+  bairro: string;
+  cep: string;
+  cidade: string;
+  pais: string;
+  telefone?: string;
+  email?: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // Funções de autenticação
@@ -27,7 +60,7 @@ export const authService = {
   },
 
   // Cadastro
-  async signUp(email: string, password: string, userData: { name: string; role: string }) {
+  async signUp(email: string, password: string, userData: { name: string; role: UserRole }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

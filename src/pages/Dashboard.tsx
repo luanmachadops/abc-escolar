@@ -1,52 +1,115 @@
-import { Container, Title, Text, Grid, Card, Group, ThemeIcon, Stack } from '@mantine/core';
+import { Container, Title, Text, Grid, Card, Group, ThemeIcon, Stack, Loader, Alert, Button } from '@mantine/core';
 import {
   IconUsers,
   IconBook,
   IconSchool,
   IconChalkboard,
   IconTrendingUp,
-  IconCurrencyDollar
+  IconCurrencyDollar,
+  IconRefresh,
+  IconAlertCircle
 } from '@tabler/icons-react';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { useUserData } from '../hooks/useUserData';
 
 const Dashboard = () => {
-  const stats = [
+  const { stats, atividadesRecentes, proximosEventos, loading, error, refreshData } = useDashboardData();
+  const { userData, loading: userLoading } = useUserData();
+
+  const statsConfig = [
     {
       title: 'Total de Alunos',
-      value: '1,234',
+      value: stats.totalAlunos.toString(),
       icon: IconSchool,
       color: 'blue'
     },
     {
       title: 'Professores',
-      value: '89',
+      value: stats.totalProfessores.toString(),
       icon: IconChalkboard,
       color: 'green'
     },
     {
       title: 'Turmas Ativas',
-      value: '45',
+      value: stats.totalTurmas.toString(),
       icon: IconUsers,
       color: 'orange'
     },
     {
       title: 'Cursos',
-      value: '12',
+      value: stats.totalCursos.toString(),
       icon: IconBook,
       color: 'purple'
     },
     {
       title: 'Taxa de Aprovação',
-      value: '94%',
+      value: `${stats.taxaAprovacao}%`,
       icon: IconTrendingUp,
       color: 'teal'
     },
     {
       title: 'Receita Mensal',
-      value: 'R$ 125.000',
+      value: new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(stats.receitaMensal),
       icon: IconCurrencyDollar,
       color: 'red'
     }
   ];
+
+  // Debug: Mostrar informações na tela
+  if (userLoading) {
+    return (
+      <Container size="xl">
+        <Stack align="center" justify="center" h={400}>
+          <Loader size="lg" />
+          <Text>Carregando dados do usuário...</Text>
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <Container size="xl">
+        <Stack align="center" justify="center" h={400}>
+          <Text c="red">Usuário não encontrado ou não logado</Text>
+          <Text c="dimmed" mt="sm">Por favor, faça login novamente</Text>
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Container size="xl">
+        <Stack align="center" justify="center" h={400}>
+          <Loader size="lg" />
+          <Text>Carregando dados do dashboard...</Text>
+          <Text size="sm" c="dimmed" mt="sm">Escola: {userData.escola_id}</Text>
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container size="xl">
+        <Stack align="center" justify="center" h={400}>
+          <Text c="red">Erro ao carregar dados: {error}</Text>
+          <Text c="dimmed" size="sm" ta="center" mt="sm">
+            Isso pode acontecer se não há dados cadastrados no sistema ainda.
+            <br />
+            Comece cadastrando uma escola, usuários e turmas.
+          </Text>
+          <Button onClick={refreshData} leftSection={<IconRefresh size={16} />}>
+            Tentar Novamente
+          </Button>
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container size="xl">
@@ -59,7 +122,7 @@ const Dashboard = () => {
         </div>
 
         <Grid>
-          {stats.map((stat, index) => (
+          {statsConfig.map((stat, index) => (
             <Grid.Col key={index} span={{ base: 12, sm: 6, md: 4 }}>
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <Group justify="space-between">
@@ -88,13 +151,34 @@ const Dashboard = () => {
         <Grid>
           <Grid.Col span={{ base: 12, md: 8 }}>
             <Card shadow="sm" padding="lg" radius="md" withBorder h={400}>
-              <Title order={3} mb="md">Atividades Recentes</Title>
+              <Group justify="space-between" mb="md">
+                <Title order={3}>Atividades Recentes</Title>
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  leftSection={<IconRefresh size={14} />}
+                  onClick={refreshData}
+                >
+                  Atualizar
+                </Button>
+              </Group>
               <Stack gap="md">
-                <Text c="dimmed">• Novo aluno matriculado: João Silva</Text>
-                <Text c="dimmed">• Professor Maria Santos adicionou notas da turma 3A</Text>
-                <Text c="dimmed">• Relatório mensal de frequência gerado</Text>
-                <Text c="dimmed">• Pagamento processado: Turma 2B</Text>
-                <Text c="dimmed">• Nova comunicação enviada aos responsáveis</Text>
+                {atividadesRecentes.length > 0 ? (
+                  atividadesRecentes.map((atividade) => (
+                    <Group key={atividade.id} gap="xs">
+                      <Text c="dimmed" size="sm">
+                        • {atividade.descricao}
+                      </Text>
+                      <Text c="dimmed" size="xs" ml="auto">
+                        {atividade.data}
+                      </Text>
+                    </Group>
+                  ))
+                ) : (
+                  <Text c="dimmed" ta="center" py="xl">
+                    Nenhuma atividade recente encontrada
+                  </Text>
+                )}
               </Stack>
             </Card>
           </Grid.Col>
@@ -103,22 +187,20 @@ const Dashboard = () => {
             <Card shadow="sm" padding="lg" radius="md" withBorder h={400}>
               <Title order={3} mb="md">Próximos Eventos</Title>
               <Stack gap="md">
-                <div>
-                  <Text fw={500}>Reunião de Pais</Text>
-                  <Text size="sm" c="dimmed">15/12/2024 - 19:00</Text>
-                </div>
-                <div>
-                  <Text fw={500}>Prova Final - 3º Ano</Text>
-                  <Text size="sm" c="dimmed">18/12/2024 - 08:00</Text>
-                </div>
-                <div>
-                  <Text fw={500}>Formatura</Text>
-                  <Text size="sm" c="dimmed">20/12/2024 - 19:00</Text>
-                </div>
-                <div>
-                  <Text fw={500}>Férias Escolares</Text>
-                  <Text size="sm" c="dimmed">22/12/2024 - 02/02/2025</Text>
-                </div>
+                {proximosEventos.length > 0 ? (
+                  proximosEventos.map((evento) => (
+                    <div key={evento.id}>
+                      <Text fw={500}>{evento.titulo}</Text>
+                      <Text size="sm" c="dimmed">
+                        {evento.data} - {evento.hora}
+                      </Text>
+                    </div>
+                  ))
+                ) : (
+                  <Text c="dimmed" ta="center" py="xl">
+                    Nenhum evento programado
+                  </Text>
+                )}
               </Stack>
             </Card>
           </Grid.Col>

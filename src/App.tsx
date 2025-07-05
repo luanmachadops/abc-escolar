@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { MantineProvider, createTheme } from '@mantine/core';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -18,6 +19,8 @@ import Comunicacao from './pages/Comunicacao';
 import Relatorios from './pages/Relatorios';
 import Financeiro from './pages/Financeiro';
 import Configuracao from './pages/Configuracao';
+import Calendario from './pages/Calendario';
+import Debug from './pages/Debug';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -42,18 +45,52 @@ const AppContent = () => {
         <Route path="/register/school" element={!user ? <RegisterSchoolPage /> : <Navigate to="/dashboard" />} />
         <Route path="/register/admin" element={!user ? <RegisterAdminPage /> : <Navigate to="/dashboard" />} />
         <Route path="/register/confirm" element={!user ? <RegisterConfirmPage /> : <Navigate to="/dashboard" />} />
+        <Route path="/debug" element={<Debug />} />
         
         {/* Rotas protegidas */}
-        <Route path="/dashboard" element={user ? <DashboardLayout /> : <Navigate to="/" />}>
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Dashboard />} />
-          <Route path="turmas" element={<Turmas />} />
-          <Route path="cursos" element={<Cursos />} />
-          <Route path="alunos" element={<Alunos />} />
-          <Route path="professores" element={<Professores />} />
+          <Route path="turmas" element={
+            <ProtectedRoute allowedRoles={['admin', 'secretario', 'professor']}>
+              <Turmas />
+            </ProtectedRoute>
+          } />
+          <Route path="cursos" element={
+            <ProtectedRoute allowedRoles={['admin', 'secretario']}>
+              <Cursos />
+            </ProtectedRoute>
+          } />
+          <Route path="alunos" element={
+            <ProtectedRoute allowedRoles={['admin', 'secretario', 'professor']}>
+              <Alunos />
+            </ProtectedRoute>
+          } />
+          <Route path="professores" element={
+            <ProtectedRoute allowedRoles={['admin', 'secretario']}>
+              <Professores />
+            </ProtectedRoute>
+          } />
           <Route path="comunicacao" element={<Comunicacao />} />
-          <Route path="relatorios" element={<Relatorios />} />
-          <Route path="financeiro" element={<Financeiro />} />
-          <Route path="configuracao" element={<Configuracao />} />
+          <Route path="calendario" element={<Calendario />} />
+          <Route path="relatorios" element={
+            <ProtectedRoute allowedRoles={['admin', 'secretario']}>
+              <Relatorios />
+            </ProtectedRoute>
+          } />
+          <Route path="financeiro" element={
+            <ProtectedRoute allowedRoles={['admin', 'secretario']}>
+              <Financeiro />
+            </ProtectedRoute>
+          } />
+          <Route path="configuracao" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Configuracao />
+            </ProtectedRoute>
+          } />
         </Route>
         
         {/* Rota de fallback */}

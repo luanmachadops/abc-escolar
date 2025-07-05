@@ -48,26 +48,24 @@ const RegisterConfirmPage = () => {
         }
         
         if (session?.user) {
-          // Usuário está logado, verificar se o email foi confirmado
-          if (session.user.email_confirmed_at) {
-            logger.info('Email confirmado, redirecionando para dashboard', 'RegisterConfirmPage', {
-              userId: session.user.id,
-              confirmedAt: session.user.email_confirmed_at
-            });
-            setIsConfirmed(true);
-            setIsChecking(false);
-            
-            // Aguardar 3 segundos e redirecionar para o dashboard
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 3000);
-          } else {
-            logger.debug('Email ainda não confirmado', 'RegisterConfirmPage', {
-              userId: session.user.id,
-              emailConfirmed: false
-            });
-            setIsChecking(false);
-          }
+          // Verificar se o usuário está logado e tem dados válidos
+          // Como a confirmação de email está desabilitada no Supabase (enable_confirmations = false),
+          // vamos considerar o usuário como confirmado se ele conseguiu fazer login
+          logger.info('Usuário logado detectado, considerando como confirmado', 'RegisterConfirmPage', {
+            userId: session.user.id,
+            email: session.user.email,
+            emailConfirmedAt: session.user.email_confirmed_at || 'N/A (confirmação desabilitada)'
+          });
+          
+          setIsConfirmed(true);
+          setIsChecking(false);
+          
+          handleSuccess('Acesso liberado! Redirecionando para o dashboard...', 'RegisterConfirmPage');
+          
+          // Aguardar 2 segundos e redirecionar
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
         } else {
           logger.debug('Nenhuma sessão ativa encontrada', 'RegisterConfirmPage');
           setIsChecking(false);
@@ -84,15 +82,16 @@ const RegisterConfirmPage = () => {
     // Escutar mudanças no estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          logger.info('Email confirmado via auth state change', 'RegisterConfirmPage', {
+        if (event === 'SIGNED_IN' && session?.user) {
+          logger.info('Login detectado via auth state change', 'RegisterConfirmPage', {
             userId: session.user.id,
-            confirmedAt: session.user.email_confirmed_at
+            email: session.user.email,
+            emailConfirmedAt: session.user.email_confirmed_at || 'N/A (confirmação desabilitada)'
           });
           
           setIsConfirmed(true);
           
-          handleSuccess('Email confirmado! Redirecionando para o dashboard...', 'RegisterConfirmPage');
+          handleSuccess('Acesso liberado! Redirecionando para o dashboard...', 'RegisterConfirmPage');
           
           // Aguardar 2 segundos e redirecionar
           setTimeout(() => {
