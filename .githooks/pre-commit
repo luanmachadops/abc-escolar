@@ -1,0 +1,23 @@
+#!/bin/sh
+# Hook de pre-commit para automação
+
+echo "🔍 Executando verificações antes do commit..."
+
+# Executa o linter
+echo "📝 Verificando código com ESLint..."
+npm run lint
+if [ $? -ne 0 ]; then
+    echo "❌ Erro no linting. Corrija os problemas antes de commitar."
+    exit 1
+fi
+
+# Verifica se o build funciona
+echo "🏗️  Testando build..."
+npm run build
+if [ $? -ne 0 ]; then
+    echo "❌ Erro no build. Corrija os problemas antes de commitar."
+    exit 1
+fi
+
+echo "✅ Todas as verificações passaram!"
+exit 0
