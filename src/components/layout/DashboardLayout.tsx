@@ -66,6 +66,7 @@ const DashboardLayout = () => {
     { icon: IconCalendar, label: 'Calendário', path: '/dashboard/calendario', show: true },
     { icon: IconChartBar, label: 'Relatórios', path: '/dashboard/relatorios', show: canViewReports },
     { icon: IconCurrencyDollar, label: 'Financeiro', path: '/dashboard/financeiro', show: canManageFinances },
+    { icon: IconUser, label: 'Acesso Usuários', path: '/dashboard/acesso-usuarios', show: canManageSchool },
     { icon: IconSettings, label: 'Configuração', path: '/dashboard/configuracao', show: canManageSchool }
   ];
 

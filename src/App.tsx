@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { MantineProvider, createTheme } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -19,6 +20,7 @@ import Comunicacao from './pages/Comunicacao';
 import Relatorios from './pages/Relatorios';
 import Financeiro from './pages/Financeiro';
 import Configuracao from './pages/Configuracao';
+import AcessoUsuarios from './pages/AcessoUsuarios';
 import Calendario from './pages/Calendario';
 import Debug from './pages/Debug';
 
@@ -37,6 +39,7 @@ const AppContent = () => {
 
   return (
     <MantineProvider theme={theme}>
+      <Notifications />
       <Routes>
         {/* Rotas públicas */}
         <Route path="/" element={!user ? <LandingPage /> : <Navigate to="/dashboard" />} />
@@ -84,6 +87,11 @@ const AppContent = () => {
           <Route path="financeiro" element={
             <ProtectedRoute allowedRoles={['admin', 'secretario']}>
               <Financeiro />
+            </ProtectedRoute>
+          } />
+          <Route path="acesso-usuarios" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AcessoUsuarios />
             </ProtectedRoute>
           } />
           <Route path="configuracao" element={

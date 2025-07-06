@@ -217,7 +217,7 @@ const RegisterAdminPage = () => {
   }
 
   return (
-    <Box style={{ minHeight: '100vh', background: colorScheme === 'dark' ? '#1a1b1e' : '#f8f9fa' }}>
+    <Box style={{ minHeight: '100vh' }}>
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">

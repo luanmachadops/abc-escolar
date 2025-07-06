@@ -1,14 +1,14 @@
 import { Container, Title, Text, Center, Stack } from '@mantine/core';
 
-const Turmas = () => {
+const AcessoUsuarios = () => {
   return (
-    <Container size="xl">
+    <Container size="xl" style={{ minHeight: '100vh' }}>
       <Center style={{ minHeight: '60vh' }}>
         <Stack align="center" gap="md">
-          <Title order={1} size={48} ta="center">
-            Turmas ADM
+          <Title order={1} size="48" ta="center">
+            Acesso Usuários ADM
           </Title>
-          <Text size="lg" c="dimmed" ta="center">
+          <Text c="dimmed" ta="center">
             Página em desenvolvimento
           </Text>
         </Stack>
@@ -17,4 +17,4 @@ const Turmas = () => {
   );
 };
 
-export default Turmas;
+export default AcessoUsuarios;

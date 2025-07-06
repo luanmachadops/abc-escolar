@@ -115,7 +115,7 @@ const Dashboard = () => {
     <Container size="xl">
       <Stack gap="xl">
         <div>
-          <Title order={1} mb="xs">Dashboard</Title>
+          <Title order={1} mb="xs">Dashboard ADM</Title>
           <Text c="dimmed" size="lg">
             Bem-vindo ao painel de controle do ABC Escolar
           </Text>

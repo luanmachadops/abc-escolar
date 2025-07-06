@@ -30,7 +30,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <Box style={{ minHeight: '100vh', background: colorScheme === 'dark' ? '#1a1b1e' : '#f8f9fa' }}>
+    <Box style={{ minHeight: '100vh' }}>
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">
@@ -130,7 +130,7 @@ const LandingPage = () => {
       </Container>
 
       {/* CTA Section */}
-      <Box style={{ background: colorScheme === 'dark' ? '#25262b' : '#e9ecef' }}>
+      <Box bg="var(--mantine-color-gray-1)">
         <Container size="xl" py={60}>
           <Stack align="center" gap="lg">
             <Title order={2} ta="center">Pronto para começar?</Title>

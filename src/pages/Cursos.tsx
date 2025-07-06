@@ -6,7 +6,7 @@ const Cursos = () => {
       <Center style={{ minHeight: '60vh' }}>
         <Stack align="center" gap="md">
           <Title order={1} size={48} ta="center">
-            Cursos
+            Cursos ADM
           </Title>
           <Text size="lg" c="dimmed" ta="center">
             Página em desenvolvimento
