@@ -289,7 +289,12 @@ export default function Cursos() {
       <Stack gap="md">
         {/* Cabeçalho */}
         <Group justify="space-between">
-          <Title order={2}>Gerenciamento de Cursos</Title>
+          <div>
+            <Title order={2}>Gerenciamento de Cursos</Title>
+            <Text size="sm" c="dimmed" mt="xs">
+              Configure os cursos oferecidos pela escola. Defina nomes, descrições, duração e organize a estrutura curricular da sua instituição.
+            </Text>
+          </div>
           <Button leftSection={<IconPlus size={16} />} onClick={open}>
             Novo Curso
           </Button>

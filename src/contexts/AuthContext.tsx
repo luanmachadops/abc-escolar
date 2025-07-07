@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isFirstTime: boolean;
-  signIn: (email: string, password: string) => Promise<any>;
+  signIn: (identifier: string, password: string) => Promise<any>;
   signUp: (email: string, password: string, userData: { name: string; role: UserRole }) => Promise<any>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(false);
-  const { checkFirstTime: checkFirstTimeHook } = useUserAccess();
+  const { checkFirstTime: checkFirstTimeHook, detectIdentifierType } = useUserAccess();
 
   useEffect(() => {
     // Verificar se há uma sessão ativa
@@ -46,15 +46,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await authService.signIn(email, password);
-    if (data.user) {
-      setUser(data.user);
-      // Verificar se é primeira vez após login bem-sucedido
-      const firstTime = await checkFirstTimeHook();
-      setIsFirstTime(firstTime);
+  const signIn = async (identifier: string, password: string) => {
+    try {
+      let email = identifier;
+      
+      // Detectar tipo de identificador
+      const identifierType = detectIdentifierType(identifier);
+      
+      // Se não for email, buscar o email correspondente no banco
+      if (identifierType !== 'email') {
+        let query = supabase.from('usuarios').select('email');
+        
+        if (identifierType === 'cpf') {
+          query = query.eq('cpf', identifier.replace(/[^\d]/g, ''));
+        } else if (identifierType === 'ra') {
+          query = query.eq('ra', identifier);
+        } else {
+          // Tentar buscar por RA ou CPF se tipo for desconhecido
+          const cleanIdentifier = identifier.replace(/[^\d]/g, '');
+          if (cleanIdentifier.length === 11) {
+            query = query.eq('cpf', cleanIdentifier);
+          } else {
+            query = query.eq('ra', identifier);
+          }
+        }
+        
+        const { data: userData, error: searchError } = await query.maybeSingle();
+        
+        if (searchError || !userData) {
+          return {
+            data: { user: null, session: null },
+            error: { message: 'Usuário não encontrado' }
+          };
+        }
+        
+        email = userData.email;
+      }
+      
+      // Fazer login com o email encontrado
+      const { data, error } = await authService.signIn(email, password);
+      
+      if (data.user) {
+        setUser(data.user);
+        // Verificar se é primeira vez após login bem-sucedido
+        const firstTime = await checkFirstTimeHook();
+        setIsFirstTime(firstTime);
+      }
+      
+      return { data, error };
+    } catch (error) {
+      console.error('Erro no login:', error);
+      return {
+        data: { user: null, session: null },
+        error: { message: 'Erro interno no sistema de login' }
+      };
     }
-    return { data, error };
   };
 
   const signUp = async (email: string, password: string, userData: { name: string; role: UserRole }) => {

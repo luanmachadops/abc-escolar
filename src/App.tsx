@@ -17,7 +17,8 @@ import Turmas from './pages/Turmas';
 import Cursos from './pages/Cursos';
 import Alunos from './pages/Alunos';
 import Professores from './pages/Professores';
-import Comunicacao from './pages/Comunicacao';
+import Comunicacao from './pages/Avisos';
+import Chat from './pages/Chat';
 import Relatorios from './pages/Relatorios';
 import Financeiro from './pages/Financeiro';
 import Configuracao from './pages/Configuracao';
@@ -81,6 +82,7 @@ const AppContent = () => {
             </ProtectedRoute>
           } />
           <Route path="comunicacao" element={<Comunicacao />} />
+          <Route path="comunicacao2" element={<Chat />} />
           <Route path="calendario" element={<Calendario />} />
           <Route path="relatorios" element={
             <ProtectedRoute allowedRoles={['admin', 'secretario']}>

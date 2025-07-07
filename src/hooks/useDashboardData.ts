@@ -42,39 +42,63 @@ export const useDashboardData = () => {
 
   const fetchDashboardStats = async () => {
     try {
+      // Verificar se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('Dashboard - Usuário não autenticado, pulando busca de estatísticas');
+        return;
+      }
+      
       if (!userData?.escola_id) {
-        throw new Error('Escola não identificada');
+        console.log('Dashboard - Escola não identificada, pulando busca de estatísticas');
+        return;
       }
 
       // Buscar total de alunos
-      const { count: totalAlunos } = await supabase
+      const { count: totalAlunos, error: alunosError } = await supabase
         .from('usuarios')
         .select('*', { count: 'exact', head: true })
         .eq('escola_id', userData.escola_id)
         .eq('funcao', 'aluno')
         .eq('ativo', true);
+      
+      if (alunosError) {
+        console.error('Erro ao buscar total de alunos:', alunosError);
+      }
 
       // Buscar total de professores
-      const { count: totalProfessores } = await supabase
+      const { count: totalProfessores, error: professoresError } = await supabase
         .from('usuarios')
         .select('*', { count: 'exact', head: true })
         .eq('escola_id', userData.escola_id)
         .eq('funcao', 'professor')
         .eq('ativo', true);
+      
+      if (professoresError) {
+        console.error('Erro ao buscar total de professores:', professoresError);
+      }
 
-      // Buscar total de turmas ativas
-      const { count: totalTurmas } = await supabase
+      // Buscar total de turmas
+      const { count: totalTurmas, error: turmasError } = await supabase
         .from('turmas')
         .select('*', { count: 'exact', head: true })
         .eq('escola_id', userData.escola_id)
         .eq('ativo', true);
+      
+      if (turmasError) {
+        console.error('Erro ao buscar total de turmas:', turmasError);
+      }
 
       // Buscar total de cursos ativos
-      const { count: totalCursos } = await supabase
+      const { count: totalCursos, error: cursosError } = await supabase
         .from('cursos')
         .select('*', { count: 'exact', head: true })
         .eq('escola_id', userData.escola_id)
         .eq('ativo', true);
+      
+      if (cursosError) {
+        console.error('Erro ao buscar total de cursos:', cursosError);
+      }
 
       // Calcular receita mensal (pagamentos do mês atual)
       const inicioMes = new Date();
@@ -86,13 +110,17 @@ export const useDashboardData = () => {
       fimMes.setDate(0);
       fimMes.setHours(23, 59, 59, 999);
 
-      const { data: pagamentos } = await supabase
+      const { data: pagamentos, error: pagamentosError } = await supabase
         .from('financeiro')
         .select('valor')
         .eq('escola_id', userData.escola_id)
         .eq('status', 'pago')
         .gte('data_pagamento', inicioMes.toISOString().split('T')[0])
         .lte('data_pagamento', fimMes.toISOString().split('T')[0]);
+      
+      if (pagamentosError) {
+        console.error('Erro ao buscar pagamentos:', pagamentosError);
+      }
 
       const receitaMensal = pagamentos?.reduce((total, p) => total + Number(p.valor), 0) || 0;
 
@@ -120,7 +148,17 @@ export const useDashboardData = () => {
 
   const fetchAtividadesRecentes = async () => {
     try {
-      if (!userData?.escola_id) return;
+      // Verificar se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('Dashboard - Usuário não autenticado, pulando busca de atividades');
+        return;
+      }
+      
+      if (!userData?.escola_id) {
+        console.log('Dashboard - Escola não identificada, pulando busca de atividades');
+        return;
+      }
 
       // Buscar atividades recentes de diferentes tabelas
       const atividades: AtividadeRecente[] = [];
@@ -140,14 +178,15 @@ export const useDashboardData = () => {
             .select('nome_completo, escola_id')
             .eq('id', matricula.aluno_id)
             .eq('escola_id', userData.escola_id)
-            .single();
+            .maybeSingle();
 
           // Buscar dados da turma
           const { data: turma } = await supabase
             .from('turmas')
             .select('nome')
             .eq('id', matricula.turma_id)
-            .single();
+            .eq('escola_id', userData.escola_id)
+            .maybeSingle();
 
           if (aluno && turma) {
             atividades.push({
@@ -175,7 +214,8 @@ export const useDashboardData = () => {
             .from('usuarios')
             .select('nome_completo')
             .eq('id', comunicacao.remetente_id)
-            .single();
+            .eq('escola_id', userData.escola_id)
+            .maybeSingle();
 
           if (remetente) {
             atividades.push({

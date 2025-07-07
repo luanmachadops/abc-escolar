@@ -322,7 +322,12 @@ export default function Turmas() {
       <Stack gap="md">
         {/* Cabeçalho */}
         <Group justify="space-between">
-          <Title order={2}>Gerenciamento de Turmas</Title>
+          <div>
+            <Title order={2}>Gerenciamento de Turmas</Title>
+            <Text size="sm" c="dimmed" mt="xs">
+              Organize e gerencie as turmas da sua escola. Aqui você pode criar novas turmas, definir capacidades, associar cursos e acompanhar a ocupação de cada turma.
+            </Text>
+          </div>
           <Button leftSection={<IconPlus size={16} />} onClick={open}>
             Nova Turma
           </Button>

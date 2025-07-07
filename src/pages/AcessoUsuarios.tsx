@@ -68,7 +68,7 @@ interface FormData {
 
 const AcessoUsuarios = () => {
   const { user } = useAuth();
-  const { createUserAccess, resetUserPassword } = useUserAccess();
+  const { createUserAccess, resetUserPassword, generateSecurePassword } = useUserAccess();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpened, setModalOpened] = useState(false);
@@ -87,7 +87,7 @@ const AcessoUsuarios = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [shareModalOpened, setShareModalOpened] = useState(false);
-  const [accessData, setAccessData] = useState<{email: string, password: string, name: string} | null>(null);
+  const [accessData, setAccessData] = useState<{email: string, password: string, name: string, ra?: string} | null>(null);
   const [turmas, setTurmas] = useState<any[]>([]);
   const [selectedTurma, setSelectedTurma] = useState<string>('');
 
@@ -247,21 +247,24 @@ const AcessoUsuarios = () => {
     });
   };
 
-  const shareViaEmail = (data: {email: string, password: string, name: string}) => {
+  const shareViaEmail = (data: {email: string, password: string, name: string, ra?: string}) => {
     const subject = 'Dados de Acesso - Sistema Escolar';
-    const body = `Olá ${data.name},\n\nSeus dados de acesso ao sistema escolar:\n\nE-mail: ${data.email}\nSenha: ${data.password}\n\nPor favor, altere sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Administrativa`;
+    const raInfo = data.ra ? `\nRA: ${data.ra}` : '';
+    const body = `Olá ${data.name},\n\nSeus dados de acesso ao sistema escolar:\n\nE-mail: ${data.email}${raInfo}\nSenha: ${data.password}\n\nPor favor, altere sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Administrativa`;
     const mailtoLink = `mailto:${data.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoLink);
   };
 
-  const shareViaWhatsApp = (data: {email: string, password: string, name: string}) => {
-    const message = `Olá ${data.name}! Seus dados de acesso ao sistema escolar:\n\n📧 E-mail: ${data.email}\n🔑 Senha: ${data.password}\n\n⚠️ Por favor, altere sua senha no primeiro acesso.`;
+  const shareViaWhatsApp = (data: {email: string, password: string, name: string, ra?: string}) => {
+    const raInfo = data.ra ? `\n🎓 RA: ${data.ra}` : '';
+    const message = `Olá ${data.name}! Seus dados de acesso ao sistema escolar:\n\n📧 E-mail: ${data.email}${raInfo}\n🔑 Senha: ${data.password}\n\n⚠️ Por favor, altere sua senha no primeiro acesso.`;
     const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappLink, '_blank');
   };
 
-  const getAccessText = (data: {email: string, password: string, name: string}) => {
-    return `Dados de Acesso - ${data.name}\n\nE-mail: ${data.email}\nSenha: ${data.password}\n\nPor favor, altere sua senha no primeiro acesso.`;
+  const getAccessText = (data: {email: string, password: string, name: string, ra?: string}) => {
+    const raInfo = data.ra ? `\nRA: ${data.ra}` : '';
+    return `Dados de Acesso - ${data.name}\n\nE-mail: ${data.email}${raInfo}\nSenha: ${data.password}\n\nPor favor, altere sua senha no primeiro acesso.`;
   };
 
   // Salvar usuário
@@ -329,7 +332,8 @@ const AcessoUsuarios = () => {
             setAccessData({
               email: accessData.email || accessData.ficticiousEmail || '',
               password: accessData.password || '',
-              name: formData.nome_completo
+              name: formData.nome_completo,
+              ra: accessData.ra
             });
           }
         } else {
@@ -433,18 +437,28 @@ const AcessoUsuarios = () => {
 
   // Resetar senha
   const handleResetPassword = async (usuario: Usuario) => {
-    const newPassword = prompt('Digite a nova senha temporária para o usuário:');
-    if (!newPassword) return;
-
     try {
-      await resetUserPassword(usuario.id, newPassword);
+      const result = await resetUserPassword(usuario.auth_user_id);
       
-      notifications.show({
-        title: 'Sucesso',
-        message: `Senha redefinida com sucesso. Nova senha: ${newPassword}`,
-        color: 'green',
-        icon: <IconCheck size={16} />
-      });
+      if (result.success && result.password) {
+        // Preparar dados para compartilhamento
+        setAccessData({
+          email: usuario.email,
+          password: result.password,
+          name: usuario.nome_completo,
+          ra: usuario.ra
+        });
+        
+        // Abrir modal de compartilhamento
+        setShareModalOpened(true);
+        
+        notifications.show({
+          title: 'Sucesso',
+          message: 'Senha redefinida com sucesso! Use o modal para compartilhar os dados.',
+          color: 'green',
+          icon: <IconCheck size={16} />
+        });
+      }
     } catch (error: any) {
       console.error('Erro ao resetar senha:', error);
       notifications.show({
@@ -809,7 +823,7 @@ const AcessoUsuarios = () => {
               color="orange"
               onClick={() => handleResetPassword(editingUser)}
             >
-              Enviar Email de Redefinição de Senha
+              Redefinir Acesso
             </Button>
           )}
 
@@ -852,6 +866,9 @@ const AcessoUsuarios = () => {
                <Text size="sm" fw={500} mb="xs">Dados de Acesso:</Text>
                <Text size="sm"><strong>Nome:</strong> {accessData.name}</Text>
                <Text size="sm"><strong>E-mail:</strong> {accessData.email}</Text>
+               {accessData.ra && (
+                 <Text size="sm"><strong>RA:</strong> {accessData.ra}</Text>
+               )}
                <Text size="sm"><strong>Senha:</strong> <Text component="span" ff="monospace" c="blue">{accessData.password}</Text></Text>
              </Paper>
 

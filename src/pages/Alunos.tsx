@@ -327,9 +327,12 @@ export default function Alunos() {
   const handleShareAccess = (type: 'email' | 'whatsapp' | 'copy') => {
     if (!generatedAccess) return;
 
-    const loginInfo = generatedAccess.username 
-      ? `Usuário: ${generatedAccess.username}`
-      : `Email: ${generatedAccess.email}`;
+    // Para alunos, username agora é o RA, então simplificar a mensagem
+    const loginInfo = generatedAccess.ra 
+      ? `RA: ${generatedAccess.ra}`
+      : generatedAccess.username 
+        ? `Usuário: ${generatedAccess.username}`
+        : `Email: ${generatedAccess.email}`;
     
     const message = `🎓 Acesso ao Sistema Escolar\n\n${loginInfo}\nSenha: ${generatedAccess.password}\n\nAcesse: ${window.location.origin}/login`;
 
@@ -377,7 +380,12 @@ export default function Alunos() {
   return (
     <Container size="xl" py="xl">
       <Group justify="space-between" mb="lg">
-        <Title order={1}>Gestão de Alunos</Title>
+        <div>
+          <Title order={1}>Gestão de Alunos</Title>
+          <Text size="sm" c="dimmed" mt="xs">
+            Cadastre e gerencie todos os alunos da escola. Controle matrículas, associe alunos às turmas e configure diferentes tipos de acesso ao sistema.
+          </Text>
+        </div>
         <Button leftSection={<IconPlus size={16} />} onClick={open}>
           Novo Aluno
         </Button>
@@ -455,8 +463,8 @@ export default function Alunos() {
                   </Table.Td>
                   <Table.Td>
                     {aluno.turmas?.map(turma => (
-                      <Badge key={turma.nome} variant="outline" size="sm">
-                        {turma.nome}
+                      <Badge key={turma?.nome || turma?.id || Math.random()} variant="outline" size="sm">
+                        {turma?.nome || 'Sem nome'}
                       </Badge>
                     ))}
                   </Table.Td>
@@ -540,8 +548,8 @@ export default function Alunos() {
 
           {formData.tipo_acesso === 'username' && (
             <Alert icon={<IconInfoCircle size={16} />} color="blue">
-              Um nome de usuário será gerado automaticamente baseado no nome do aluno.
-              Exemplo: aluno.joao.silva.2024
+              Um RA (Registro Acadêmico) será gerado automaticamente como nome de usuário.
+              Exemplo: 2024JOS1234
             </Alert>
           )}
 
@@ -549,8 +557,8 @@ export default function Alunos() {
             label="Turma"
             placeholder="Selecione a turma"
             data={turmas.map(turma => ({
-              value: turma.id,
-              label: `${turma.nome} - ${turma.cursos?.nome || ''}`
+              value: turma?.id || '',
+              label: `${turma?.nome || 'Sem nome'} - ${turma.cursos?.nome || ''}`
             }))}
             value={formData.turma_id}
             onChange={(value) => setFormData({ ...formData, turma_id: value || '' })}
@@ -612,32 +620,57 @@ export default function Alunos() {
           {generatedAccess && (
             <Paper p="md" withBorder>
               <Stack gap="sm">
-                <div>
-                  <Text size="sm" fw={500} mb={4}>
-                    {generatedAccess.username ? 'Nome de Usuário:' : 'Email:'}
-                  </Text>
-                  <Group gap="xs">
-                    <Text family="monospace" size="sm">
-                      {generatedAccess.username || generatedAccess.email}
+                {generatedAccess.ra ? (
+                  <div>
+                    <Text size="sm" fw={500} mb={4}>
+                      RA (Registro Acadêmico):
                     </Text>
-                    <CopyButton value={generatedAccess.username || generatedAccess.email || ''}>
-                      {({ copied, copy }) => (
-                        <ActionIcon
-                          color={copied ? 'teal' : 'gray'}
-                          variant="subtle"
-                          onClick={copy}
-                          size="sm"
-                        >
-                          {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
-                        </ActionIcon>
-                      )}
-                    </CopyButton>
-                  </Group>
-                </div>
+                    <Group gap="xs">
+                      <Text family="monospace" size="sm" fw={600} c="blue">
+                        {generatedAccess.ra}
+                      </Text>
+                      <CopyButton value={generatedAccess.ra}>
+                        {({ copied, copy }) => (
+                          <ActionIcon
+                            color={copied ? 'teal' : 'gray'}
+                            variant="subtle"
+                            onClick={copy}
+                            size="sm"
+                          >
+                            {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                          </ActionIcon>
+                        )}
+                      </CopyButton>
+                    </Group>
+                  </div>
+                ) : (
+                  <div>
+                    <Text size="sm" fw={500} mb={4}>
+                      {generatedAccess.username ? 'Email de Login (Nome de Usuário):' : 'Email de Login:'}
+                    </Text>
+                    <Group gap="xs">
+                      <Text family="monospace" size="sm">
+                        {generatedAccess.username || generatedAccess.email}
+                      </Text>
+                      <CopyButton value={generatedAccess.username || generatedAccess.email || ''}>
+                        {({ copied, copy }) => (
+                          <ActionIcon
+                            color={copied ? 'teal' : 'gray'}
+                            variant="subtle"
+                            onClick={copy}
+                            size="sm"
+                          >
+                            {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                          </ActionIcon>
+                        )}
+                      </CopyButton>
+                    </Group>
+                  </div>
+                )}
 
                 <div>
                   <Text size="sm" fw={500} mb={4}>
-                    Senha:
+                    Senha de Login:
                   </Text>
                   <Group gap="xs">
                     <Text family="monospace" size="sm">

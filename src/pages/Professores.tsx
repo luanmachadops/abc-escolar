@@ -317,11 +317,13 @@ export default function Professores() {
   const handleShareAccess = (type: 'email' | 'whatsapp' | 'copy') => {
     if (!generatedAccess) return;
 
+    // Priorizar username se existir, senão usar o email (que pode ser fictício)
     const loginInfo = generatedAccess.username 
       ? `Usuário: ${generatedAccess.username}`
       : `Email: ${generatedAccess.email}`;
     
-    const message = `🎓 Acesso ao Sistema Escolar\n\n${loginInfo}\nSenha: ${generatedAccess.password}\n\nAcesse: ${window.location.origin}/login`;
+    const raInfo = generatedAccess.ra ? `\nRA: ${generatedAccess.ra}` : '';
+    const message = `🎓 Acesso ao Sistema Escolar\n\n${loginInfo}${raInfo}\nSenha: ${generatedAccess.password}\n\nAcesse: ${window.location.origin}/login`;
 
     switch (type) {
       case 'email':
@@ -359,7 +361,7 @@ export default function Professores() {
                          (professor.username && professor.username.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesDisciplina = !selectedDisciplina || 
-                             professor.disciplinas?.some(disciplina => disciplina.nome === selectedDisciplina);
+                             professor.disciplinas?.some(disciplina => disciplina?.nome === selectedDisciplina);
     
     return matchesSearch && matchesDisciplina;
   });
@@ -367,7 +369,12 @@ export default function Professores() {
   return (
     <Container size="xl" py="xl">
       <Group justify="space-between" mb="lg">
-        <Title order={1}>Gestão de Professores</Title>
+        <div>
+          <Title order={1}>Gestão de Professores</Title>
+          <Text size="sm" c="dimmed" mt="xs">
+            Cadastre e gerencie o corpo docente da escola. Configure acessos, associe professores às disciplinas e mantenha as informações atualizadas.
+          </Text>
+        </div>
         <Button leftSection={<IconPlus size={16} />} onClick={open}>
           Novo Professor
         </Button>
@@ -388,8 +395,8 @@ export default function Professores() {
             data={[
               { value: '', label: 'Todas as disciplinas' },
               ...disciplinas.map(disciplina => ({
-                value: disciplina.nome,
-                label: `${disciplina.nome} - ${disciplina.cursos?.nome || ''}`
+                value: disciplina?.nome || '',
+                label: `${disciplina?.nome || 'Sem nome'} - ${disciplina?.cursos?.nome || ''}`
               }))
             ]}
             value={selectedDisciplina}
@@ -446,8 +453,8 @@ export default function Professores() {
                   <Table.Td>
                     <Group gap="xs">
                       {professor.disciplinas?.slice(0, 2).map(disciplina => (
-                        <Badge key={disciplina.nome} variant="outline" size="sm">
-                          {disciplina.nome}
+                        <Badge key={disciplina?.nome || Math.random()} variant="outline" size="sm">
+                          {disciplina?.nome || 'Sem nome'}
                         </Badge>
                       ))}
                       {professor.disciplinas && professor.disciplinas.length > 2 && (
@@ -551,7 +558,7 @@ export default function Professores() {
              placeholder="Selecione as disciplinas que o professor irá lecionar"
              data={disciplinas.map(disciplina => ({
                value: disciplina.id,
-               label: `${disciplina.nome} - ${disciplina.cursos?.nome || ''}`
+               label: `${disciplina?.nome || 'Sem nome'} - ${disciplina?.cursos?.nome || ''}`
              }))}
              value={formData.disciplinas_ids}
              onChange={(value) => setFormData({ ...formData, disciplinas_ids: value })}
@@ -636,6 +643,31 @@ export default function Professores() {
                     </CopyButton>
                   </Group>
                 </div>
+
+                {generatedAccess.ra && (
+                  <div>
+                    <Text size="sm" fw={500} mb={4}>
+                      RA:
+                    </Text>
+                    <Group gap="xs">
+                      <Text family="monospace" size="sm">
+                        {generatedAccess.ra}
+                      </Text>
+                      <CopyButton value={generatedAccess.ra}>
+                        {({ copied, copy }) => (
+                          <ActionIcon
+                            color={copied ? 'teal' : 'gray'}
+                            variant="subtle"
+                            onClick={copy}
+                            size="sm"
+                          >
+                            {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                          </ActionIcon>
+                        )}
+                      </CopyButton>
+                    </Group>
+                  </div>
+                )}
 
                 <div>
                   <Text size="sm" fw={500} mb={4}>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -14,22 +14,51 @@ import {
   Box,
   ThemeIcon
 } from '@mantine/core';
-import { IconSchool, IconAlertCircle, IconMoon, IconSun, IconMail } from '@tabler/icons-react';
+import { IconSchool, IconAlertCircle, IconMoon, IconSun, IconUser, IconId } from '@tabler/icons-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useUserAccess } from '../hooks/useUserAccess';
 import { notifications } from '@mantine/notifications';
-import { supabase } from '../lib/supabase';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [placeholderText, setPlaceholderText] = useState('RA, CPF ou E-mail');
+  const [identifierType, setIdentifierType] = useState<'email' | 'cpf' | 'ra' | 'unknown'>('unknown');
   
   const { signIn } = useAuth();
   const { colorScheme, toggleColorScheme } = useTheme();
+  const { detectIdentifierType } = useUserAccess();
   const navigate = useNavigate();
+
+  // Detectar tipo de identificador e atualizar placeholder
+  useEffect(() => {
+    if (!identifier.trim()) {
+      setPlaceholderText('RA, CPF ou E-mail');
+      setIdentifierType('unknown');
+      return;
+    }
+
+    const type = detectIdentifierType(identifier);
+    setIdentifierType(type);
+
+    switch (type) {
+      case 'email':
+        setPlaceholderText('E-mail detectado');
+        break;
+      case 'cpf':
+        setPlaceholderText('CPF detectado');
+        break;
+      case 'ra':
+        setPlaceholderText('RA detectado');
+        break;
+      default:
+        setPlaceholderText('RA, CPF ou E-mail');
+    }
+  }, [identifier, detectIdentifierType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +66,8 @@ const LoginPage = () => {
     setError('');
 
     try {
-      if (!email.trim()) {
-        setError('Email é obrigatório');
+      if (!identifier.trim()) {
+        setError('RA, CPF ou E-mail é obrigatório');
         setLoading(false);
         return;
       }
@@ -49,10 +78,16 @@ const LoginPage = () => {
         return;
       }
 
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(identifier, password);
       
       if (error) {
-        setError('Email ou senha incorretos');
+        if (error.message === 'Usuário não encontrado') {
+          setError('Usuário não encontrado. Verifique seu RA, CPF ou e-mail.');
+        } else if (error.message.includes('Invalid login credentials')) {
+          setError('Credenciais inválidas. Verifique sua senha.');
+        } else {
+          setError('Erro ao fazer login. Verifique suas credenciais.');
+        }
       } else {
         notifications.show({
           title: 'Login realizado com sucesso!',
@@ -98,7 +133,7 @@ const LoginPage = () => {
             </ThemeIcon>
             <Title order={2} ta="center">Fazer Login</Title>
             <Text c="dimmed" size="sm" ta="center">
-              Entre com suas credenciais para acessar o sistema
+              Entre com seu RA, CPF ou e-mail para acessar o sistema
             </Text>
           </Stack>
 
@@ -111,13 +146,23 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit}>
             <Stack>
               <TextInput
-                label="Email"
-                placeholder="seu@email.com"
-                type="email"
+                label="RA, CPF ou E-mail"
+                placeholder={placeholderText}
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                leftSection={<IconMail size={16} />}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                leftSection={
+                  identifierType === 'email' ? <IconUser size={16} /> :
+                  identifierType === 'ra' ? <IconId size={16} /> :
+                  identifierType === 'cpf' ? <IconId size={16} /> :
+                  <IconUser size={16} />
+                }
+                description={
+                  identifierType === 'email' ? 'E-mail detectado' :
+                  identifierType === 'cpf' ? 'CPF detectado (11 dígitos)' :
+                  identifierType === 'ra' ? 'RA detectado' :
+                  'Digite seu RA, CPF ou e-mail'
+                }
               />
               
               <PasswordInput

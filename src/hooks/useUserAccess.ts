@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 import { notifications } from '@mantine/notifications';
 
 export interface UserAccessData {
@@ -7,6 +7,7 @@ export interface UserAccessData {
   password?: string;
   email?: string;
   ficticiousEmail?: string;
+  ra?: string;
 }
 
 export interface CreateUserAccessParams {
@@ -46,6 +47,53 @@ export const useUserAccess = () => {
     const timestamp = Date.now().toString().slice(-6); // Últimos 6 dígitos do timestamp
     
     return `${prefix}.${normalizedName}.${currentYear}.${timestamp}`;
+  };
+
+  // Função para gerar RA único
+  const generateRA = (nomeCompleto: string, anoIngresso?: number): string => {
+    const anoAtual = anoIngresso || new Date().getFullYear();
+    
+    // Extrair iniciais do nome (primeiras letras de cada palavra)
+    const iniciais = nomeCompleto
+      .toUpperCase()
+      .split(' ')
+      .filter(word => word.length > 0)
+      .map(word => word.charAt(0))
+      .join('')
+      .substring(0, 3); // Limitar a 3 caracteres
+    
+    // Gerar timestamp único
+    const timestampSuffix = (Date.now() % 10000).toString().padStart(4, '0');
+    
+    return `${anoAtual}${iniciais}${timestampSuffix}`;
+  };
+
+  // Função para detectar tipo de identificador
+  const detectIdentifierType = (identifier: string): 'email' | 'cpf' | 'ra' | 'unknown' => {
+    // Remover formatação
+    const cleanIdentifier = identifier.replace(/[^\w@.-]/g, '');
+    
+    // Verificar se é email
+    if (/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(cleanIdentifier)) {
+      return 'email';
+    }
+    
+    // Verificar se é CPF (11 dígitos)
+    if (/^\d{11}$/.test(cleanIdentifier)) {
+      return 'cpf';
+    }
+    
+    // Verificar se é RA (formato: AAAAIIIXXXX - ano + iniciais + timestamp)
+    if (/^\d{4}[A-Z]{1,3}\d{4}$/.test(cleanIdentifier)) {
+      return 'ra';
+    }
+    
+    // Verificar se é número (possível RA simples)
+    if (/^\d+$/.test(cleanIdentifier)) {
+      return 'ra';
+    }
+    
+    return 'unknown';
   };
 
   // Função para gerar senha segura
@@ -201,11 +249,43 @@ export const useUserAccess = () => {
       let email = params.email;
       let username: string | undefined;
       let ficticiousEmail: string | undefined;
+      let ra: string | undefined;
       
-      // Se não há email, gerar username automático e email fictício
+      // Se não há email, gerar username automático, email fictício e RA (para alunos)
       if (!email) {
-        username = generateUsername(params.nome, params.role);
-        ficticiousEmail = `${username}@abcescolar.com`;
+        if (params.role === 'aluno') {
+          // Para alunos: RA como username
+          ra = generateRA(params.nome);
+          
+          // Verificar se o RA já existe e gerar um novo se necessário
+          let raAttempts = 0;
+          while (raAttempts < 5) {
+            const { data: existingRA } = await supabase
+              .from('usuarios')
+              .select('id')
+              .eq('ra', ra)
+              .single();
+            
+            if (!existingRA) break; // RA disponível
+            
+            // Gerar novo RA
+            raAttempts++;
+            ra = generateRA(params.nome);
+          }
+          
+          if (raAttempts >= 5) {
+            throw new Error('Não foi possível gerar um RA único após várias tentativas');
+          }
+          
+          // RA é o username para alunos
+          username = ra;
+          ficticiousEmail = `${ra}@abcescolar.com`;
+        } else {
+          // Para professores: manter lógica atual
+          username = generateUsername(params.nome, params.role);
+          ficticiousEmail = `${username}@abcescolar.com`;
+        }
+        
         email = ficticiousEmail;
         
         // Verificar se o email fictício já existe e gerar um novo se necessário
@@ -219,10 +299,16 @@ export const useUserAccess = () => {
           
           if (!existingUser) break; // Email disponível
           
-          // Gerar novo username com timestamp diferente
+          // Gerar novo username/RA com timestamp diferente
           attempts++;
-          username = generateUsername(params.nome, params.role);
-          ficticiousEmail = `${username}@abcescolar.com`;
+          if (params.role === 'aluno') {
+            ra = generateRA(params.nome);
+            username = ra;
+            ficticiousEmail = `${ra}@abcescolar.com`;
+          } else {
+            username = generateUsername(params.nome, params.role);
+            ficticiousEmail = `${username}@abcescolar.com`;
+          }
           email = ficticiousEmail;
         }
         
@@ -233,19 +319,43 @@ export const useUserAccess = () => {
       
       const password = generateSecurePassword();
       
-      // Criar usuário via Supabase Admin API
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          nome: params.nome,
-          role: params.role,
-          escola_id: params.escola_id,
-          username: username || undefined,
-          is_ficticious_email: !!ficticiousEmail
-        }
-      });
+      // Criar usuário via Supabase Auth (usando admin se disponível, senão signup normal)
+      let authData, authError;
+      
+      if (supabaseAdmin) {
+        // Usar admin API se service key estiver disponível
+        const result = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            nome: params.nome,
+            role: params.role,
+            escola_id: params.escola_id,
+            username: username || undefined,
+            is_ficticious_email: !!ficticiousEmail
+          }
+        });
+        authData = result.data;
+        authError = result.error;
+      } else {
+        // Fallback para signup normal (desenvolvimento local)
+        const result = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              nome: params.nome,
+              role: params.role,
+              escola_id: params.escola_id,
+              username: username || undefined,
+              is_ficticious_email: !!ficticiousEmail
+            }
+          }
+        });
+        authData = result.data;
+        authError = result.error;
+      }
       
       if (authError) {
         // Tratar erros específicos do Supabase Auth
@@ -278,6 +388,7 @@ export const useUserAccess = () => {
           funcao: params.role,
           escola_id: params.escola_id,
           telefone: params.telefone || null,
+          ra: ra || null, // RA gerado para alunos
           ativo: true,
           primeira_vez: true // Marcar como primeira vez para forçar alteração de senha
         })
@@ -345,8 +456,9 @@ export const useUserAccess = () => {
       return {
         username,
         password,
-        email: params.email,
-        ficticiousEmail
+        email: ficticiousEmail || params.email, // Retorna o email fictício se foi gerado, senão o email original
+        ficticiousEmail,
+        ra
       };
       
     } catch (error) {
@@ -369,6 +481,8 @@ export const useUserAccess = () => {
     checkFirstTime,
     generateUsername,
     generateSecurePassword,
+    generateRA,
+    detectIdentifierType,
     loading
   };
 };
