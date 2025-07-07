@@ -217,12 +217,14 @@ const RegisterAdminPage = () => {
   }
 
   return (
-    <Box style={{ minHeight: '100vh' }}>
+    <Box mih="100vh">
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">
           <Group component={Link} to="/" style={{ textDecoration: 'none' }}>
-            <IconSchool size={32} color="#228be6" />
+            <ThemeIcon size={40} variant="light" color="blue">
+              <IconSchool size={24} />
+            </ThemeIcon>
             <Title order={2} c="blue">ABC Escolar</Title>
           </Group>
           <Button
@@ -246,7 +248,7 @@ const RegisterAdminPage = () => {
             <Text c="dimmed" size="sm" ta="center">
               Etapa 2 de 2 - Dados do Administrador para {schoolData.nomeInstituicao}
             </Text>
-            <Progress value={100} size="sm" style={{ width: '100%' }} />
+            <Progress value={100} size="sm" w="100%" />
           </Stack>
 
           {error && (

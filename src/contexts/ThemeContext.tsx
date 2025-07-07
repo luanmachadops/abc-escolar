@@ -17,19 +17,17 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [colorScheme, setColorScheme] = useState<MantineColorScheme>('light');
+  const [colorScheme, setColorScheme] = useState<MantineColorScheme>(() => {
+    const savedTheme = localStorage.getItem('abc-escolar-theme') as MantineColorScheme;
+    return savedTheme || 'light';
+  });
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('abc-escolar-theme') as MantineColorScheme;
-    if (savedTheme) {
-      setColorScheme(savedTheme);
-    }
-  }, []);
+    localStorage.setItem('abc-escolar-theme', colorScheme);
+  }, [colorScheme]);
 
   const toggleColorScheme = () => {
-    const newScheme = colorScheme === 'light' ? 'dark' : 'light';
-    setColorScheme(newScheme);
-    localStorage.setItem('abc-escolar-theme', newScheme);
+    setColorScheme(current => current === 'light' ? 'dark' : 'light');
   };
 
   return (

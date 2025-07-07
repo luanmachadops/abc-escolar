@@ -24,7 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Aguardar carregamento da autenticação
   if (authLoading || userDataLoading) {
     return (
-      <Center style={{ height: '100vh' }}>
+      <Center h="100vh">
         <Loader size="lg" />
       </Center>
     );
@@ -38,7 +38,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Verificar se houve erro ao carregar dados do usuário
   if (error || !userData) {
     return (
-      <Center style={{ height: '100vh', padding: '2rem' }}>
+      <Center h="100vh" p="2rem">
         <Alert 
           icon={<IconAlertCircle size={16} />} 
           color="red" 
@@ -71,7 +71,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (allowedRoles && allowedRoles.length > 0) {
     if (!allowedRoles.includes(userData.funcao)) {
       return (
-        <Center style={{ height: '100vh', padding: '2rem' }}>
+        <Center h="100vh" p="2rem">
           <Alert 
             icon={<IconAlertCircle size={16} />} 
             color="red" 

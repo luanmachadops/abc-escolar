@@ -148,11 +148,13 @@ const RegisterConfirmPage = () => {
 
   if (isChecking) {
     return (
-      <Box style={{ minHeight: '100vh' }}>
+      <Box mih="100vh">
         <Container size="xl" py="md">
           <Group justify="space-between">
             <Group component={Link} to="/" style={{ textDecoration: 'none' }}>
-              <IconSchool size={32} color="#228be6" />
+          <ThemeIcon size={40} variant="light" color="blue">
+            <IconSchool size={24} />
+          </ThemeIcon>
               <Title order={2} c="blue">ABC Escolar</Title>
             </Group>
             <Button
@@ -165,7 +167,7 @@ const RegisterConfirmPage = () => {
           </Group>
         </Container>
 
-        <Center style={{ minHeight: 'calc(100vh - 100px)' }}>
+        <Center mih="calc(100vh - 100px)">
           <Stack align="center">
             <Loader size="lg" />
             <Text>Verificando status da confirmação...</Text>
@@ -176,12 +178,14 @@ const RegisterConfirmPage = () => {
   }
 
   return (
-    <Box style={{ minHeight: '100vh' }}>
+    <Box mih="100vh">
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">
           <Group component={Link} to="/" style={{ textDecoration: 'none' }}>
-            <IconSchool size={32} color="#228be6" />
+            <ThemeIcon size={40} variant="light" color="blue">
+              <IconSchool size={24} />
+            </ThemeIcon>
             <Title order={2} c="blue">ABC Escolar</Title>
           </Group>
           <Button
@@ -220,12 +224,12 @@ const RegisterConfirmPage = () => {
                 </Text>
 
                 {error && (
-                  <Alert icon={<IconAlertCircle size={16} />} color="red" style={{ width: '100%' }}>
+                  <Alert icon={<IconAlertCircle size={16} />} color="red" w="100%">
                     {error}
                   </Alert>
                 )}
 
-                <Stack spacing="md" style={{ width: '100%' }}>
+                <Stack gap="md" w="100%">
                   <Text size="sm" ta="center">
                     Não recebeu o email?
                   </Text>

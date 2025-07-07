@@ -25,6 +25,8 @@ import { handleError, handleSuccess, handleValidationError, logger } from '../ut
 interface SchoolData {
   nomeInstituicao: string;
   cnpjCpf: string;
+  email: string;
+  telefone: string;
   logradouro: string;
   numero: string;
   bairro: string;
@@ -37,6 +39,8 @@ const RegisterSchoolPage = () => {
   const [formData, setFormData] = useState<SchoolData>({
     nomeInstituicao: '',
     cnpjCpf: '',
+    email: '',
+    telefone: '',
     logradouro: '',
     numero: '',
     bairro: '',
@@ -70,6 +74,17 @@ const RegisterSchoolPage = () => {
     return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
   };
 
+  const formatTelefone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 10) {
+      // Telefone fixo: (00) 0000-0000
+      return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    } else {
+      // Celular: (00) 00000-0000
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+  };
+
   const validateForm = () => {
     if (!formData.nomeInstituicao.trim()) {
       setError('Nome da instituição é obrigatório');
@@ -77,6 +92,14 @@ const RegisterSchoolPage = () => {
     }
     if (!formData.cnpjCpf.trim()) {
       setError('CNPJ/CPF é obrigatório');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError('E-mail é obrigatório');
+      return false;
+    }
+    if (!formData.telefone.trim()) {
+      setError('Telefone é obrigatório');
       return false;
     }
     if (!formData.logradouro.trim()) {
@@ -133,6 +156,8 @@ const RegisterSchoolPage = () => {
         .insert({
           nome_instituicao: formData.nomeInstituicao,
           cnpj_cpf: formData.cnpjCpf.replace(/\D/g, ''), // Remove formatação
+          email: formData.email,
+          telefone: formData.telefone.replace(/\D/g, ''), // Remove formatação
           logradouro: formData.logradouro,
           numero: formData.numero,
           bairro: formData.bairro,
@@ -179,12 +204,14 @@ const RegisterSchoolPage = () => {
   };
 
   return (
-    <Box style={{ minHeight: '100vh' }}>
+    <Box mih="100vh">
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">
           <Group component={Link} to="/" style={{ textDecoration: 'none' }}>
-            <IconSchool size={32} color="#228be6" />
+            <ThemeIcon size={40} variant="light" color="blue">
+              <IconSchool size={24} />
+            </ThemeIcon>
             <Title order={2} c="blue">ABC Escolar</Title>
           </Group>
           <Button
@@ -208,7 +235,7 @@ const RegisterSchoolPage = () => {
             <Text c="dimmed" size="sm" ta="center">
               Etapa 1 de 2 - Informações da Instituição
             </Text>
-            <Progress value={50} size="sm" style={{ width: '100%' }} />
+            <Progress value={50} size="sm" w="100%" />
           </Stack>
 
           {error && (
@@ -235,6 +262,29 @@ const RegisterSchoolPage = () => {
                 onChange={(e) => handleChange('cnpjCpf', formatCNPJCPF(e.target.value))}
                 maxLength={18}
               />
+              
+              <Grid>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="E-mail"
+                    placeholder="contato@escola.com"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Telefone"
+                    placeholder="(00) 00000-0000"
+                    required
+                    value={formData.telefone}
+                    onChange={(e) => handleChange('telefone', formatTelefone(e.target.value))}
+                    maxLength={15}
+                  />
+                </Grid.Col>
+              </Grid>
               
               <Grid>
                 <Grid.Col span={8}>

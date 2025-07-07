@@ -14,11 +14,12 @@ import {
   Box,
   ThemeIcon
 } from '@mantine/core';
-import { IconSchool, IconAlertCircle, IconMoon, IconSun } from '@tabler/icons-react';
+import { IconSchool, IconAlertCircle, IconMoon, IconSun, IconMail } from '@tabler/icons-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { notifications } from '@mantine/notifications';
+import { supabase } from '../lib/supabase';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -36,6 +37,18 @@ const LoginPage = () => {
     setError('');
 
     try {
+      if (!email.trim()) {
+        setError('Email é obrigatório');
+        setLoading(false);
+        return;
+      }
+      
+      if (!password.trim()) {
+        setError('Senha é obrigatória');
+        setLoading(false);
+        return;
+      }
+
       const { error } = await signIn(email, password);
       
       if (error) {
@@ -56,12 +69,14 @@ const LoginPage = () => {
   };
 
   return (
-    <Box style={{ minHeight: '100vh' }}>
+    <Box mih="100vh">
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">
           <Group component={Link} to="/" style={{ textDecoration: 'none' }}>
-            <IconSchool size={32} color="#228be6" />
+            <ThemeIcon size={40} variant="light" color="blue">
+              <IconSchool size={24} />
+            </ThemeIcon>
             <Title order={2} c="blue">ABC Escolar</Title>
           </Group>
           <Button
@@ -98,9 +113,11 @@ const LoginPage = () => {
               <TextInput
                 label="Email"
                 placeholder="seu@email.com"
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                leftSection={<IconMail size={16} />}
               />
               
               <PasswordInput

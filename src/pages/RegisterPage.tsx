@@ -25,12 +25,14 @@ const RegisterPage = () => {
   }, [navigate]);
 
   return (
-    <Box style={{ minHeight: '100vh' }}>
+    <Box mih="100vh">
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">
           <Group component={Link} to="/" style={{ textDecoration: 'none' }}>
-            <IconSchool size={32} color="#228be6" />
+            <ThemeIcon size={40} variant="light" color="blue">
+              <IconSchool size={24} />
+            </ThemeIcon>
             <Title order={2} c="blue">ABC Escolar</Title>
           </Group>
           <Button
@@ -63,7 +65,7 @@ const RegisterPage = () => {
               Crie sua conta no ABC Escolar em duas etapas simples:
             </Text>
             
-            <Stack spacing="xs" style={{ width: '100%' }}>
+            <Stack gap="xs" w="100%">
               <Group>
                 <ThemeIcon size={24} radius="xl" variant="light">
                   <Text size="xs" fw={700}>1</Text>

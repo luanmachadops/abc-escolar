@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { MantineProvider, createTheme } from '@mantine/core';
+import { MantineProvider, createTheme, MantineColorScheme } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -10,6 +10,7 @@ import RegisterPage from './pages/RegisterPage';
 import RegisterSchoolPage from './pages/RegisterSchoolPage';
 import RegisterAdminPage from './pages/RegisterAdminPage';
 import RegisterConfirmPage from './pages/RegisterConfirmPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import Turmas from './pages/Turmas';
@@ -25,11 +26,10 @@ import Calendario from './pages/Calendario';
 import Debug from './pages/Debug';
 
 const AppContent = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isFirstTime } = useAuth();
   const { colorScheme } = useTheme();
 
   const theme = createTheme({
-    colorScheme,
     primaryColor: 'blue',
   });
 
@@ -38,23 +38,26 @@ const AppContent = () => {
   }
 
   return (
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={theme} forceColorScheme={colorScheme}>
       <Notifications />
       <Routes>
         {/* Rotas públicas */}
-        <Route path="/" element={!user ? <LandingPage /> : <Navigate to="/dashboard" />} />
-        <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
-        <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/dashboard" />} />
-        <Route path="/register/school" element={!user ? <RegisterSchoolPage /> : <Navigate to="/dashboard" />} />
-        <Route path="/register/admin" element={!user ? <RegisterAdminPage /> : <Navigate to="/dashboard" />} />
-        <Route path="/register/confirm" element={!user ? <RegisterConfirmPage /> : <Navigate to="/dashboard" />} />
+        <Route path="/" element={!user ? <LandingPage /> : (isFirstTime ? <Navigate to="/change-password" /> : <Navigate to="/dashboard" />)} />
+        <Route path="/login" element={!user ? <LoginPage /> : (isFirstTime ? <Navigate to="/change-password" /> : <Navigate to="/dashboard" />)} />
+        <Route path="/register" element={!user ? <RegisterPage /> : (isFirstTime ? <Navigate to="/change-password" /> : <Navigate to="/dashboard" />)} />
+        <Route path="/register/school" element={!user ? <RegisterSchoolPage /> : (isFirstTime ? <Navigate to="/change-password" /> : <Navigate to="/dashboard" />)} />
+        <Route path="/register/admin" element={!user ? <RegisterAdminPage /> : (isFirstTime ? <Navigate to="/change-password" /> : <Navigate to="/dashboard" />)} />
+        <Route path="/register/confirm" element={!user ? <RegisterConfirmPage /> : (isFirstTime ? <Navigate to="/change-password" /> : <Navigate to="/dashboard" />)} />
+        <Route path="/change-password" element={user && isFirstTime ? <ChangePasswordPage /> : <Navigate to={user ? "/dashboard" : "/login"} />} />
         <Route path="/debug" element={<Debug />} />
         
         {/* Rotas protegidas */}
         <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
+          isFirstTime ? <Navigate to="/change-password" /> : (
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          )
         }>
           <Route index element={<Dashboard />} />
           <Route path="turmas" element={

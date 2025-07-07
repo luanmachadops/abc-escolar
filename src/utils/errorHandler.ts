@@ -269,12 +269,20 @@ export function handleSuccess(message: string, context?: string) {
 export function setupGlobalErrorHandling() {
   // Capturar erros JavaScript não tratados
   window.addEventListener('error', (event) => {
-    handleError(event.error, 'Global Error Handler', false);
+    // Evitar loops infinitos de erro
+    if (event.error && event.error.message !== 'ResizeObserver loop limit exceeded') {
+      handleError(event.error, 'Global Error Handler', false);
+    }
+    event.preventDefault();
   });
   
   // Capturar promises rejeitadas não tratadas
   window.addEventListener('unhandledrejection', (event) => {
-    handleError(event.reason, 'Unhandled Promise Rejection', false);
+    // Evitar loops infinitos de erro
+    if (event.reason && !event.reason.toString().includes('ResizeObserver')) {
+      handleError(event.reason, 'Unhandled Promise Rejection', false);
+    }
+    event.preventDefault();
   });
   
   logger.info('Sistema de tratamento de erros inicializado', 'Error Handler');

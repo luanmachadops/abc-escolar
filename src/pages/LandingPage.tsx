@@ -1,4 +1,4 @@
-import { Container, Title, Text, Button, Group, Stack, Box, Grid, Card, ThemeIcon } from '@mantine/core';
+import { Container, Title, Text, Button, Group, Stack, Box, Grid, Card, ThemeIcon, Paper } from '@mantine/core';
 import { IconSchool, IconUsers, IconChartBar, IconShield, IconMoon, IconSun } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
@@ -30,12 +30,14 @@ const LandingPage = () => {
   ];
 
   return (
-    <Box style={{ minHeight: '100vh' }}>
+    <Box mih="100vh">
       {/* Header */}
       <Container size="xl" py="md">
         <Group justify="space-between">
           <Group>
-            <IconSchool size={32} color="#228be6" />
+            <ThemeIcon size={40} variant="light" color="blue">
+              <IconSchool size={24} />
+            </ThemeIcon>
             <Title order={2} c="blue">ABC Escolar</Title>
           </Group>
           <Button
@@ -88,18 +90,20 @@ const LandingPage = () => {
           </Grid.Col>
           
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <Box 
-              style={{ 
-                height: 400, 
-                background: 'linear-gradient(135deg, #228be6 0%, #339af0 100%)',
-                borderRadius: 12,
+            <Paper 
+              h={400}
+              radius="md"
+              bg="var(--mantine-color-blue-6)"
+              style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
             >
-              <IconSchool size={120} color="white" />
-            </Box>
+              <ThemeIcon size={120} variant="white" color="blue" radius="xl">
+                <IconSchool size={60} />
+              </ThemeIcon>
+            </Paper>
           </Grid.Col>
         </Grid>
       </Container>
@@ -112,9 +116,9 @@ const LandingPage = () => {
           <Grid>
             {features.map((feature, index) => (
               <Grid.Col key={index} span={{ base: 12, sm: 6, md: 3 }}>
-                <Card shadow="sm" padding="lg" radius="md" h="100%">
+                <Card shadow="sm" padding="lg" radius="md" h="100%" withBorder>
                   <Stack align="center" gap="md">
-                    <ThemeIcon size={60} radius="md" variant="light">
+                    <ThemeIcon size={60} radius="md" variant="light" color="blue">
                       <feature.icon size={30} />
                     </ThemeIcon>
                     <Title order={4} ta="center">{feature.title}</Title>
@@ -130,7 +134,7 @@ const LandingPage = () => {
       </Container>
 
       {/* CTA Section */}
-      <Box bg="var(--mantine-color-gray-1)">
+      <Paper bg="var(--mantine-color-default-hover)" radius={0}>
         <Container size="xl" py={60}>
           <Stack align="center" gap="lg">
             <Title order={2} ta="center">Pronto para começar?</Title>
@@ -147,7 +151,7 @@ const LandingPage = () => {
             </Button>
           </Stack>
         </Container>
-      </Box>
+      </Paper>
     </Box>
   );
 };

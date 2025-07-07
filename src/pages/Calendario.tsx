@@ -55,7 +55,7 @@ const Calendario = () => {
       hora: '14:00',
       local: 'Sala de Reuniões',
       tipo: 'reuniao',
-      cor: '#228be6'
+      cor: 'var(--mantine-color-blue-6)'
     },
     {
       id: '2',
@@ -65,7 +65,7 @@ const Calendario = () => {
       hora: '09:00',
       local: 'Auditório',
       tipo: 'evento',
-      cor: '#40c057'
+      cor: 'var(--mantine-color-green-6)'
     },
     {
       id: '3',
@@ -73,7 +73,7 @@ const Calendario = () => {
       descricao: 'Feriado Nacional',
       data: new Date(2024, 11, 25),
       tipo: 'feriado',
-      cor: '#fd7e14'
+      cor: 'var(--mantine-color-orange-6)'
     },
     {
       id: '4',
@@ -83,7 +83,7 @@ const Calendario = () => {
       hora: '08:00',
       local: 'Sala 101',
       tipo: 'aula',
-      cor: '#7c2d12'
+      cor: 'var(--mantine-color-red-8)'
     }
   ]);
 
@@ -223,12 +223,12 @@ const Calendario = () => {
               return (
                 <Grid.Col key={index} span={{ base: 12/7 }}>
                   <Box
+                    mih={rem(80)}
+                    p={4}
                     style={{
-                      minHeight: rem(80),
-                      border: '1px solid #e9ecef',
-                      borderRadius: '4px',
-                      padding: '4px',
-                      backgroundColor: item.outroMes ? '#f8f9fa' : isHoje ? '#e3f2fd' : 'white',
+                      border: '1px solid var(--mantine-color-gray-3)',
+                      borderRadius: 'var(--mantine-radius-sm)',
+                      backgroundColor: item.outroMes ? 'var(--mantine-color-gray-1)' : isHoje ? 'var(--mantine-color-blue-0)' : 'var(--mantine-color-body)',
                       cursor: 'pointer'
                     }}
                     onClick={() => {
@@ -251,7 +251,7 @@ const Calendario = () => {
                         <Badge
                           key={evento.id}
                           size="xs"
-                          style={{ backgroundColor: evento.cor }}
+                          color={evento.tipo === 'reuniao' ? 'blue' : evento.tipo === 'evento' ? 'green' : evento.tipo === 'feriado' ? 'orange' : 'red'}
                           variant="filled"
                         >
                           {evento.titulo.length > 10 
@@ -287,8 +287,8 @@ const Calendario = () => {
                   justify="space-between"
                   p="sm"
                   style={{
-                    border: '1px solid #e9ecef',
-                    borderRadius: '8px',
+                    border: '1px solid var(--mantine-color-gray-3)',
+                    borderRadius: 'var(--mantine-radius-md)',
                     cursor: 'pointer'
                   }}
                   onClick={() => {
@@ -300,8 +300,8 @@ const Calendario = () => {
                     <Box
                       w={12}
                       h={12}
+                      bg={evento.tipo === 'reuniao' ? 'var(--mantine-color-blue-6)' : evento.tipo === 'evento' ? 'var(--mantine-color-green-6)' : evento.tipo === 'feriado' ? 'var(--mantine-color-orange-6)' : 'var(--mantine-color-red-8)'}
                       style={{
-                        backgroundColor: evento.cor,
                         borderRadius: '50%'
                       }}
                     />
@@ -333,7 +333,7 @@ const Calendario = () => {
                       </Group>
                     </Stack>
                   </Group>
-                  <Badge variant="light" style={{ backgroundColor: evento.cor + '20', color: evento.cor }}>
+                  <Badge variant="light" color={evento.tipo === 'reuniao' ? 'blue' : evento.tipo === 'evento' ? 'green' : evento.tipo === 'feriado' ? 'orange' : 'red'}>
                     {getTipoEventoLabel(evento.tipo)}
                   </Badge>
                 </Group>
@@ -356,8 +356,8 @@ const Calendario = () => {
               <Box
                 w={16}
                 h={16}
+                bg={eventoSelecionado.tipo === 'reuniao' ? 'var(--mantine-color-blue-6)' : eventoSelecionado.tipo === 'evento' ? 'var(--mantine-color-green-6)' : eventoSelecionado.tipo === 'feriado' ? 'var(--mantine-color-orange-6)' : 'var(--mantine-color-red-8)'}
                 style={{
-                  backgroundColor: eventoSelecionado.cor,
                   borderRadius: '50%'
                 }}
               />
@@ -389,7 +389,7 @@ const Calendario = () => {
             
             <Badge
               variant="light"
-              style={{ backgroundColor: eventoSelecionado.cor + '20', color: eventoSelecionado.cor }}
+              color={eventoSelecionado.tipo === 'reuniao' ? 'blue' : eventoSelecionado.tipo === 'evento' ? 'green' : eventoSelecionado.tipo === 'feriado' ? 'orange' : 'red'}
             >
               {getTipoEventoLabel(eventoSelecionado.tipo)}
             </Badge>

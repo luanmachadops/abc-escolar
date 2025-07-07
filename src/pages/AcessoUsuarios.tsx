@@ -43,6 +43,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, UserRole } from '../lib/supabase';
 import { notifications } from '@mantine/notifications';
+import { useUserAccess, CreateUserAccessParams } from '../hooks/useUserAccess';
 
 interface Usuario {
   id: string;
@@ -67,6 +68,7 @@ interface FormData {
 
 const AcessoUsuarios = () => {
   const { user } = useAuth();
+  const { createUserAccess, resetUserPassword } = useUserAccess();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpened, setModalOpened] = useState(false);
@@ -86,6 +88,8 @@ const AcessoUsuarios = () => {
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [shareModalOpened, setShareModalOpened] = useState(false);
   const [accessData, setAccessData] = useState<{email: string, password: string, name: string} | null>(null);
+  const [turmas, setTurmas] = useState<any[]>([]);
+  const [selectedTurma, setSelectedTurma] = useState<string>('');
 
   // Verificar se o usuário tem permissão para gerenciar usuários
   const canManageUsers = user?.user_metadata?.funcao === 'admin' || user?.user_metadata?.funcao === 'secretario';
@@ -114,8 +118,29 @@ const AcessoUsuarios = () => {
     }
   };
 
+  // Carregar turmas
+  const loadTurmas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('turmas')
+        .select(`
+          *,
+          cursos(
+            nome
+          )
+        `)
+        .order('nome');
+
+      if (error) throw error;
+      setTurmas(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar turmas:', error);
+    }
+  };
+
   useEffect(() => {
     loadUsuarios();
+    loadTurmas();
   }, []);
 
   // Filtrar usuários
@@ -208,6 +233,7 @@ const AcessoUsuarios = () => {
     });
     setGeneratedPassword('');
     setAccessData(null);
+    setSelectedTurma('');
   };
 
   // Funções de compartilhamento
@@ -251,6 +277,17 @@ const AcessoUsuarios = () => {
         return;
       }
 
+      // Validar turma para alunos
+      if (!editingUser && formData.funcao === 'aluno' && !selectedTurma) {
+        notifications.show({
+          title: 'Erro',
+          message: 'Turma é obrigatória para alunos',
+          color: 'red',
+          icon: <IconX size={16} />
+        });
+        return;
+      }
+
       if (editingUser) {
         // Atualizar usuário existente
         const { error } = await supabase
@@ -274,46 +311,70 @@ const AcessoUsuarios = () => {
         });
       } else {
         // Criar novo usuário
-        let authUserId = null;
-        
-        if (formData.tipo_acesso === 'email' && formData.senha) {
-          // Criar usuário usando Admin API para não afetar a sessão atual
-          const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-            email: formData.email,
-            password: formData.senha,
-            user_metadata: {
+        if (formData.funcao === 'aluno' || formData.funcao === 'professor') {
+          // Usar o hook useUserAccess para alunos e professores
+          const accessParams: CreateUserAccessParams = {
+            nome: formData.nome_completo,
+            email: formData.tipo_acesso === 'email' ? formData.email : undefined,
+            role: formData.funcao,
+            escola_id: user?.user_metadata?.escola_id || '',
+            telefone: formData.telefone || undefined,
+            turma_id: formData.funcao === 'aluno' ? selectedTurma : undefined
+          };
+
+          const accessData = await createUserAccess(accessParams);
+          
+          if (accessData) {
+            // Preparar dados para compartilhamento
+            setAccessData({
+              email: accessData.email || accessData.ficticiousEmail || '',
+              password: accessData.password || '',
+              name: formData.nome_completo
+            });
+          }
+        } else {
+          // Para admin e secretario, usar o método tradicional
+          let authUserId = null;
+          
+          if (formData.tipo_acesso === 'email' && formData.senha) {
+            // Criar usuário usando Admin API para não afetar a sessão atual
+            const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+              email: formData.email,
+              password: formData.senha,
+              user_metadata: {
+                nome_completo: formData.nome_completo,
+                funcao: formData.funcao
+              },
+              email_confirm: true // Confirmar email automaticamente
+            });
+
+            if (authError) throw authError;
+            authUserId = authData.user?.id;
+          }
+
+          // Inserir na tabela usuarios
+          const { error } = await supabase
+            .from('usuarios')
+            .insert({
+              auth_user_id: authUserId,
+              escola_id: user?.user_metadata?.escola_id,
               nome_completo: formData.nome_completo,
-              funcao: formData.funcao
-            },
-            email_confirm: true // Confirmar email automaticamente
-          });
+              email: formData.email,
+              telefone: formData.telefone,
+              funcao: formData.funcao,
+              ativo: formData.ativo
+            });
 
-          if (authError) throw authError;
-          authUserId = authData.user?.id;
-        }
+          if (error) throw error;
 
-        // Inserir na tabela usuarios
-        const { error } = await supabase
-          .from('usuarios')
-          .insert({
-            auth_user_id: authUserId,
-            escola_id: user?.user_metadata?.escola_id,
-            nome_completo: formData.nome_completo,
-            email: formData.email,
-            telefone: formData.telefone,
-            funcao: formData.funcao,
-            ativo: formData.ativo
-          });
-
-        if (error) throw error;
-
-        // Preparar dados para compartilhamento
-        if (formData.tipo_acesso === 'email' && formData.senha) {
-          setAccessData({
-            email: formData.email,
-            password: formData.senha,
-            name: formData.nome_completo
-          });
+          // Preparar dados para compartilhamento
+          if (formData.tipo_acesso === 'email' && formData.senha) {
+            setAccessData({
+              email: formData.email,
+              password: formData.senha,
+              name: formData.nome_completo
+            });
+          }
         }
 
         notifications.show({
@@ -372,16 +433,15 @@ const AcessoUsuarios = () => {
 
   // Resetar senha
   const handleResetPassword = async (usuario: Usuario) => {
+    const newPassword = prompt('Digite a nova senha temporária para o usuário:');
+    if (!newPassword) return;
+
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(usuario.email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-
-      if (error) throw error;
-
+      await resetUserPassword(usuario.id, newPassword);
+      
       notifications.show({
         title: 'Sucesso',
-        message: 'Email de redefinição de senha enviado',
+        message: `Senha redefinida com sucesso. Nova senha: ${newPassword}`,
         color: 'green',
         icon: <IconCheck size={16} />
       });
@@ -398,8 +458,8 @@ const AcessoUsuarios = () => {
 
   if (!canManageUsers) {
     return (
-      <Container size="xl" style={{ minHeight: '100vh' }}>
-        <Stack align="center" justify="center" style={{ minHeight: '60vh' }}>
+      <Container size="xl" mih="100vh">
+        <Stack align="center" justify="center" mih="60vh">
           <IconUsers size={64} color="gray" />
           <Title order={2} ta="center">Acesso Negado</Title>
           <Text c="dimmed" ta="center">
@@ -587,7 +647,7 @@ const AcessoUsuarios = () => {
                     withBorder
                     style={{
                       cursor: 'pointer',
-                      borderColor: formData.tipo_acesso === 'email' ? 'var(--mantine-color-blue-6)' : undefined,
+                      borderColor: formData.tipo_acesso === 'email' ? 'var(--mantine-color-blue-6)' : 'var(--mantine-color-gray-4)',
                       borderWidth: formData.tipo_acesso === 'email' ? 2 : 1
                     }}
                     onClick={() => setFormData(prev => ({ ...prev, tipo_acesso: 'email' }))}
@@ -602,7 +662,7 @@ const AcessoUsuarios = () => {
                     withBorder
                     style={{
                       cursor: 'pointer',
-                      borderColor: formData.tipo_acesso === 'simplificado' ? 'var(--mantine-color-blue-6)' : undefined,
+                      borderColor: formData.tipo_acesso === 'simplificado' ? 'var(--mantine-color-blue-6)' : 'var(--mantine-color-gray-4)',
                       borderWidth: formData.tipo_acesso === 'simplificado' ? 2 : 1
                     }}
                     onClick={() => setFormData(prev => ({ ...prev, tipo_acesso: 'simplificado' }))}
@@ -660,7 +720,13 @@ const AcessoUsuarios = () => {
                   { value: 'admin', label: 'Administrador' }
                 ]}
                 value={formData.funcao}
-                onChange={(value) => setFormData(prev => ({ ...prev, funcao: value as UserRole }))}
+                onChange={(value) => {
+                  setFormData(prev => ({ ...prev, funcao: value as UserRole }));
+                  // Limpar turma selecionada quando mudar a função
+                  if (value !== 'aluno') {
+                    setSelectedTurma('');
+                  }
+                }}
                 required
                 disabled={user?.user_metadata?.funcao !== 'admin'}
               />
@@ -675,6 +741,22 @@ const AcessoUsuarios = () => {
               </Box>
             </Grid.Col>
           </Grid>
+
+          {/* Campo de Turma - apenas para alunos */}
+          {formData.funcao === 'aluno' && !editingUser && (
+            <Select
+              label="Turma"
+              placeholder="Selecione uma turma"
+              data={turmas.map(turma => ({
+                value: turma.id,
+                label: `${turma.nome} - ${turma.cursos?.nome || 'Curso não definido'}`
+              }))}
+              value={selectedTurma}
+              onChange={(value) => setSelectedTurma(value || '')}
+              required
+              searchable
+            />
+          )}
 
           {!editingUser && formData.tipo_acesso === 'email' && (
              <>
@@ -701,7 +783,7 @@ const AcessoUsuarios = () => {
                />
                
                {formData.senha && (
-                 <Paper p="sm" withBorder bg="gray.0">
+                 <Paper p="sm" withBorder bg="var(--mantine-color-gray-0)">
                    <Group justify="space-between" align="center">
                      <div>
                        <Text size="sm" fw={500}>Senha gerada:</Text>

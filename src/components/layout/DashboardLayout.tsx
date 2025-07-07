@@ -13,7 +13,8 @@ import {
   Avatar,
   UnstyledButton,
   Box,
-  Burger
+  Burger,
+  ThemeIcon
 } from '@mantine/core';
 import {
   IconDashboard,
@@ -111,7 +112,9 @@ const DashboardLayout = () => {
               size="sm"
             />
             <Group>
-              <IconSchool size={28} color="#228be6" />
+              <ThemeIcon size={32} variant="light" color="blue">
+                <IconSchool size={20} />
+              </ThemeIcon>
               <Title order={3} c="blue">ABC Escolar</Title>
             </Group>
           </Group>
