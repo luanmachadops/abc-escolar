@@ -230,7 +230,7 @@ export const useUserAccess = () => {
         .from('usuarios')
         .select('primeira_vez')
         .eq('auth_user_id', user.id)
-        .single();
+        .maybeSingle();
         
       if (error || !data) return false;
       
@@ -264,7 +264,7 @@ export const useUserAccess = () => {
               .from('usuarios')
               .select('id')
               .eq('ra', ra)
-              .single();
+              .maybeSingle();
             
             if (!existingRA) break; // RA disponível
             
@@ -295,7 +295,7 @@ export const useUserAccess = () => {
             .from('usuarios')
             .select('id')
             .eq('email', email)
-            .single();
+            .maybeSingle();
           
           if (!existingUser) break; // Email disponível
           

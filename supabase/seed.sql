@@ -67,6 +67,33 @@ INSERT INTO auth.users (
   NOW(),
   '{"user_id": "123e4567-e89b-12d3-a456-426614174005", "escola_id": "550e8400-e29b-41d4-a716-446655440000", "funcao": "aluno"}'
 )
+
+-- Adicione estas linhas após os usuários existentes no auth.users:
+,
+(
+  '123e4567-e89b-12d3-a456-426614174008',
+  'luanmachadops@gmail.com',
+  crypt('#Luan2025', gen_salt('bf')),
+  NOW(),
+  NOW(),
+  NOW(),
+  '{"user_id": "123e4567-e89b-12d3-a456-426614174009", "escola_id": "550e8400-e29b-41d4-a716-446655440000", "funcao": "admin"}'
+)
+
+-- E adicione na seção usuarios:
+,
+(
+  '123e4567-e89b-12d3-a456-426614174009',
+  '123e4567-e89b-12d3-a456-426614174008',
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Luan Machado',
+  'luanmachadops@gmail.com',
+  '(11) 99999-9999',
+  'admin',
+  true,
+  false
+)
+
 ON CONFLICT (id) DO NOTHING;
 
 -- Inserir usuários na tabela usuarios

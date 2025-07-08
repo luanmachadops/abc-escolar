@@ -48,16 +48,20 @@ export const useUserData = () => {
           `)
           .eq('auth_user_id', user.id)
           .eq('ativo', true)
-          .single();
+          .maybeSingle();
 
         if (userError) {
           console.error('Erro ao buscar dados do usuário:', userError);
-          setError('Erro ao carregar dados do usuário');
+          if (userError.code === 'PGRST116') {
+            setError('Usuário não encontrado ou inativo');
+          } else {
+            setError(`Erro ao carregar dados do usuário: ${userError.message}`);
+          }
           return;
         }
 
         if (!userDataResult) {
-          setError('Usuário não encontrado');
+          setError('Usuário não encontrado na base de dados. Verifique se o cadastro foi concluído.');
           return;
         }
 

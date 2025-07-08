@@ -35,7 +35,7 @@ const Debug = () => {
             .from('usuarios')
             .select('*')
             .eq('auth_user_id', user.id)
-            .single();
+            .maybeSingle();
           
           console.log('Debug - Dados do usuário atual:', userData, userError);
           

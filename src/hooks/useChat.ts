@@ -171,7 +171,7 @@ export const useChat = () => {
               .from('usuarios')
               .select('nome_completo')
               .eq('id', ultimaMensagem.remetente_id)
-              .single();
+              .maybeSingle();
             remetenteNome = remetenteData?.nome_completo || 'Usuário';
           }
 
